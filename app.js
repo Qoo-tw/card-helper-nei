@@ -1,9 +1,9 @@
 // 刷卡小幫手（女友版）
 // 特色：離線可用、資料只存本機、支援「一鍵記帳」與「本月上限/已用」估算
 //
-// ✅ 2026-02: 保守模式（避免不確定商家是否真的被銀行認列為餐飲/購物/娛樂）
-// - 增加 category_source: MANUAL / GUESSED
-// - 若 Live+ 3% 是靠「自動猜分類」得到，會降權：不硬推當第一名，但仍列為備選
+// ✅ 修正：排名不再被「無上限 999,999,999」洗掉
+// - score 以「本筆可拿到的回饋 est_reward」為主
+// - remainReward / remainSpend 只當 tie-breaker，並封頂避免爆表
 
 const DATA = {
   rules: [],
@@ -120,10 +120,6 @@ function ruleEligible(rule, ctx){
   return true;
 }
 
-function clamp(n, lo, hi){
-  return Math.max(lo, Math.min(hi, n));
-}
-
 function evaluateRules(ctx, usageByRule){
   const out = [];
 
@@ -139,23 +135,31 @@ function evaluateRules(ctx, usageByRule){
     const remainSpend  = Math.max(0, capSpend  - used.used_spend);
 
     const amt = Number(ctx.amount || 0);
+
+    // 本筆最多只能刷到「剩餘可刷」
     const eligibleAmt = Math.max(0, Math.min(amt, remainSpend));
+
+    // 本筆回饋估算：rate * eligibleAmt，再受限於「剩餘回饋」
     let est = eligibleAmt * Number(r.rate || 0);
     est = Math.min(est, remainReward);
 
-    // ✅ 保守模式：如果 Live+ 3% 是靠「自動猜分類」，就不要硬推當第一
-    // 你可以調整扣分幅度（越大越保守）
+    // priority 先照原本的
     let prio = Number(r.priority || 0);
+
+    // （可選）如果你想保守：分類是自動猜的，不要硬推 Live+ 3% 當第一
+    // 想取消就把這段註解掉
     if(r.rule_id === "R_LIVE_3" && ctx.category_source === "GUESSED"){
-      prio -= 70; // 建議 50~90；越大越不會推 Live+ 3% 當第一
+      prio -= 0; // 0 = 不降權；想保守可改成 50~90
     }
 
-    // Score: 先看%（rate）與 priority，再看剩餘回饋與剩餘可刷
+    // ✅ 修正後排名：以「本筆可拿到的回饋 est」為主
+    // - remainReward/remainSpend 只當 tie-breaker 並封頂，避免 999,999,999 爆表
     const score =
-      (Number(r.rate||0) * 1_000_000) +
-      (prio * 10_000) +
-      (remainReward * 10) +
-      (remainSpend);
+      (Number(est || 0) * 1_000_000_000) +           // 本筆回饋最重要
+      (Number(r.rate||0) * 1_000_000) +              // 次要：回饋率
+      (prio * 10_000) +                              // 再來：priority
+      (Math.min(remainReward, 50_000) * 10) +        // 上限只做 tie-breaker，封頂
+      (Math.min(remainSpend, 200_000));              // 可刷額度只做 tie-breaker，封頂
 
     out.push({
       ...r,
@@ -165,14 +169,11 @@ function evaluateRules(ctx, usageByRule){
       remain_spend: remainSpend,
       est_reward: est,
       eligible_amount: eligibleAmt,
-      score,
-      _ctx_category_source: ctx.category_source // 方便你之後 debug（不影響 UI）
+      score
     });
   }
 
-  // 依 score 排序
   out.sort((a,b)=> b.score - a.score);
-
   return out;
 }
 
@@ -190,13 +191,11 @@ function renderRecommend(list, ctx){
   }
 
   const top = list[0];
+
   const warnParts = [];
-
-  // ✅ 額外提示：如果分類是「自動猜的」，提醒使用者可能跟銀行認列不同
   if(ctx.category_source === "GUESSED"){
-    warnParts.push(`分類為「自動推測」(${ctx.category})，銀行實際認列可能不同；如需確定，建議用小額測一次。`);
+    warnParts.push(`分類為「自動推測」(${ctx.category})，銀行實際認列可能不同。`);
   }
-
   if(Number(ctx.amount) > top.remain_spend){
     warnParts.push(`此規則本月剩餘可刷 ${money(top.remain_spend)}，超出部分回饋可能降低。`);
   }
@@ -228,7 +227,6 @@ function renderRecommend(list, ctx){
     </div>
   `;
 
-  // 也顯示備選前 3
   const alt = list.slice(1,4);
   if(alt.length){
     const items = alt.map(x => `
@@ -286,16 +284,14 @@ function currentContext(){
   const amount = Number(el("inpAmount").value || 0);
   const linepay = el("inpLinePay").checked;
 
-  // Region auto/override（更健壯：空值也視為 AUTO）
-  let regionRaw = el("inpRegion").value;
-  let region = regionRaw;
+  // Region auto/override（空值也視為 AUTO）
+  let region = el("inpRegion").value;
   if(!region || region === "AUTO"){
     region = guessRegion(merchant);
   }
 
-  // Category auto/override（更健壯：空值也視為 AUTO）
-  let categoryRaw = el("inpCategory").value;
-  let category = categoryRaw;
+  // Category auto/override（空值也視為 AUTO）
+  let category = el("inpCategory").value;
   let category_source = "MANUAL";
   if(!category || category === "AUTO"){
     category = guessCategory(merchant);
@@ -364,6 +360,7 @@ function wireEvents(){
       setStatus("請輸入正確金額。");
       return;
     }
+
     const evaluated = recommendNow();
     if(!evaluated.length){
       setStatus("找不到可用規則（請手動調整地區/分類）。");
