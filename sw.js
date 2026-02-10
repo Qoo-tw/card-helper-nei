@@ -1,5 +1,5 @@
 // Simple service worker for offline
-const CACHE = "card-helper-gf-v2";
+const CACHE = "card-helper-gf-v3";
 const ASSETS = [
   "./",
   "./index.html",
