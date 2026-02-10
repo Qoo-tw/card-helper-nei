@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#111827" />
+  <title>刷卡小幫手（女友版）</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="app-header">
+    <div class="title">刷卡小幫手（女友版）</div>
+    <div class="subtitle">輸入店家與金額 → 自動推薦三張卡：大戶黑卡 / 大衛LinePay / 匯豐Live+</div>
+  </header>
+
+  <main class="container">
+    <section class="card">
+      <h2>新增一筆</h2>
+
+      <div class="grid">
+        <label>
+          日期
+          <input id="inpDate" type="date" />
+        </label>
+
+        <label class="span2">
+          店家/描述
+          <input id="inpMerchant" type="text" placeholder="例如：鮮乳坊、Agoda、Spotify（可自行新增對照表）" />
+        </label>
+
+        <label>
+          交易地區
+          <select id="inpRegion">
+            <option value="AUTO">自動</option>
+            <option value="國內">國內</option>
+            <option value="國外">國外</option>
+          </select>
+          <div class="hint">自動：會先用商家對照表推測，找不到就預設國內</div>
+        </label>
+
+        <label>
+          分類（Live+ 用）
+          <select id="inpCategory">
+            <option value="AUTO">自動</option>
+            <option value="餐飲">餐飲</option>
+            <option value="購物">購物</option>
+            <option value="娛樂">娛樂</option>
+            <option value="其他">其他</option>
+          </select>
+          <div class="hint">不知道就選「自動」，不準再手選</div>
+        </label>
+
+        <label>
+          金額（NT$）
+          <input id="inpAmount" type="number" min="0" step="1" placeholder="例如：2000" />
+        </label>
+
+        <label class="checkbox">
+          <input id="inpLinePay" type="checkbox" />
+          這筆是用 Line Pay 付款
+          <div class="hint">只有打勾時才會評估「大衛LinePay卡 1.5%」那條</div>
+        </label>
+      </div>
+
+      <div class="actions">
+        <button id="btnAdd" class="primary">一鍵記帳（加入紀錄）</button>
+        <button id="btnResetMonth" class="ghost">清空本月紀錄</button>
+      </div>
+
+      <div id="status" class="status"></div>
+    </section>
+
+    <section class="card">
+      <h2>推薦結果</h2>
+      <div id="recommend" class="recommend">
+        <div class="muted">請先輸入店家與金額</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>本月紀錄</h2>
+      <div class="table-wrap">
+        <table id="txTable">
+          <thead>
+            <tr>
+              <th>日期</th>
+              <th>店家/描述</th>
+              <th>地區</th>
+              <th>分類</th>
+              <th class="num">金額</th>
+              <th>推薦卡片</th>
+              <th>命中規則</th>
+              <th class="num">回饋(估)</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <div class="hint">
+        所有資料只存在你的手機/瀏覽器（localStorage），不會上傳到任何伺服器。
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
