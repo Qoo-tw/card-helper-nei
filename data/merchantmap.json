@@ -1,0 +1,22 @@
+[
+  {
+    "rule_id": "R_BH_EZ",
+    "keyword": "悠遊卡",
+    "default_region": "國內"
+  },
+  {
+    "rule_id": "R_BH_EZ",
+    "keyword": "EasyCard",
+    "default_region": "國內"
+  },
+  {
+    "rule_id": "R_DW_LP",
+    "keyword": "LINEPAY",
+    "default_region": "國內"
+  },
+  {
+    "rule_id": "R_DW_LP",
+    "keyword": "Line Pay",
+    "default_region": "國內"
+  }
+]
