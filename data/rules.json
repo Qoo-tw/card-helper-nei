@@ -1,0 +1,133 @@
+[
+  {
+    "rule_id": "R_BH_EZ",
+    "card": "大戶黑卡",
+    "rule_name": "悠遊卡3%（上限NT100）",
+    "rate": 0.03,
+    "cap_reward": 100,
+    "cap_spend": 3333,
+    "priority": 95,
+    "region_allow": [
+      "國內"
+    ],
+    "keyword_allow": [
+      "悠遊卡",
+      "EasyCard"
+    ]
+  },
+  {
+    "rule_id": "R_BH_BONUS",
+    "card": "大戶黑卡",
+    "rule_name": "加碼2.5%（上限NT400）",
+    "rate": 0.025,
+    "cap_reward": 400,
+    "cap_spend": 16000,
+    "priority": 80,
+    "region_allow": [
+      "國內",
+      "國外"
+    ]
+  },
+  {
+    "rule_id": "R_BH_FOR",
+    "card": "大戶黑卡",
+    "rule_name": "國外一般2%（無上限）",
+    "rate": 0.02,
+    "cap_reward": 999999999,
+    "cap_spend": 999999999,
+    "priority": 20,
+    "region_allow": [
+      "國外"
+    ]
+  },
+  {
+    "rule_id": "R_BH_DOM",
+    "card": "大戶黑卡",
+    "rule_name": "國內一般1%（無上限）",
+    "rate": 0.01,
+    "cap_reward": 999999999,
+    "cap_spend": 999999999,
+    "priority": 10,
+    "region_allow": [
+      "國內"
+    ]
+  },
+  {
+    "rule_id": "R_DW_LP",
+    "card": "大衛LinePay卡",
+    "rule_name": "Line Pay 1.5%（上限NT800）",
+    "rate": 0.015,
+    "cap_reward": 800,
+    "cap_spend": 20000,
+    "priority": 85,
+    "region_allow": [
+      "國內"
+    ],
+    "require_linepay": true
+  },
+  {
+    "rule_id": "R_DW_FOR",
+    "card": "大衛LinePay卡",
+    "rule_name": "國外2.5%（無上限）",
+    "rate": 0.025,
+    "cap_reward": 999999999,
+    "cap_spend": 999999999,
+    "priority": 20,
+    "region_allow": [
+      "國外"
+    ]
+  },
+  {
+    "rule_id": "R_DW_DOM",
+    "card": "大衛LinePay卡",
+    "rule_name": "國內0.5%（無上限）",
+    "rate": 0.005,
+    "cap_reward": 999999999,
+    "cap_spend": 999999999,
+    "priority": 10,
+    "region_allow": [
+      "國內"
+    ]
+  },
+  {
+    "rule_id": "R_LIVE_3",
+    "card": "匯豐Live+",
+    "rule_name": "三大通路3%（餐飲/購物/娛樂，上限NT600）",
+    "rate": 0.03,
+    "cap_reward": 600,
+    "cap_spend": 20000,
+    "priority": 90,
+    "region_allow": [
+      "國內"
+    ],
+    "category_allow": [
+      "餐飲",
+      "購物",
+      "娛樂"
+    ]
+  },
+  {
+    "rule_id": "R_LIVE_FOR",
+    "card": "匯豐Live+",
+    "rule_name": "國外1%（無上限）",
+    "rate": 0.01,
+    "cap_reward": 999999999,
+    "cap_spend": 999999999,
+    "priority": 20,
+    "region_allow": [
+      "國外"
+    ]
+  },
+  {
+    "rule_id": "R_LIVE_DOM",
+    "card": "匯豐Live+",
+    "rule_name": "國內0.88%（無上限）",
+    "rate": 0.0088,
+    "cap_reward": 999999999,
+    "cap_spend": 999999999,
+    "priority": 10,
+    "region_allow": [
+      "國內"
+    ]
+  }
+]
