@@ -1,5 +1,9 @@
 // 刷卡小幫手（女友版）
 // 特色：離線可用、資料只存本機、支援「一鍵記帳」與「本月上限/已用」估算
+//
+// ✅ 2026-02: 保守模式（避免不確定商家是否真的被銀行認列為餐飲/購物/娛樂）
+// - 增加 category_source: MANUAL / GUESSED
+// - 若 Live+ 3% 是靠「自動猜分類」得到，會降權：不硬推當第一名，但仍列為備選
 
 const DATA = {
   rules: [],
@@ -95,7 +99,7 @@ function guessCategory(merchant){
 }
 
 function ruleEligible(rule, ctx){
-  // ctx: {merchant, region, category, linepay}
+  // ctx: {merchant, region, category, linepay, category_source}
   if(rule.region_allow && !rule.region_allow.includes(ctx.region)) return false;
 
   if(rule.require_linepay && !ctx.linepay) return false;
@@ -122,6 +126,7 @@ function clamp(n, lo, hi){
 
 function evaluateRules(ctx, usageByRule){
   const out = [];
+
   for(const r of DATA.rules){
     if(!ruleEligible(r, ctx)) continue;
 
@@ -138,10 +143,17 @@ function evaluateRules(ctx, usageByRule){
     let est = eligibleAmt * Number(r.rate || 0);
     est = Math.min(est, remainReward);
 
+    // ✅ 保守模式：如果 Live+ 3% 是靠「自動猜分類」，就不要硬推當第一
+    // 你可以調整扣分幅度（越大越保守）
+    let prio = Number(r.priority || 0);
+    if(r.rule_id === "R_LIVE_3" && ctx.category_source === "GUESSED"){
+      prio -= 70; // 建議 50~90；越大越不會推 Live+ 3% 當第一
+    }
+
     // Score: 先看%（rate）與 priority，再看剩餘回饋與剩餘可刷
     const score =
       (Number(r.rate||0) * 1_000_000) +
-      (Number(r.priority||0) * 10_000) +
+      (prio * 10_000) +
       (remainReward * 10) +
       (remainSpend);
 
@@ -153,7 +165,8 @@ function evaluateRules(ctx, usageByRule){
       remain_spend: remainSpend,
       est_reward: est,
       eligible_amount: eligibleAmt,
-      score
+      score,
+      _ctx_category_source: ctx.category_source // 方便你之後 debug（不影響 UI）
     });
   }
 
@@ -178,6 +191,12 @@ function renderRecommend(list, ctx){
 
   const top = list[0];
   const warnParts = [];
+
+  // ✅ 額外提示：如果分類是「自動猜的」，提醒使用者可能跟銀行認列不同
+  if(ctx.category_source === "GUESSED"){
+    warnParts.push(`分類為「自動推測」(${ctx.category})，銀行實際認列可能不同；如需確定，建議用小額測一次。`);
+  }
+
   if(Number(ctx.amount) > top.remain_spend){
     warnParts.push(`此規則本月剩餘可刷 ${money(top.remain_spend)}，超出部分回饋可能降低。`);
   }
@@ -185,7 +204,9 @@ function renderRecommend(list, ctx){
     warnParts.push(`此規則本月回饋上限已滿。`);
   }
 
-  const warnHtml = warnParts.length ? `<div class="hint" style="margin-top:8px;color:#fbbf24">${warnParts.join(" ")}</div>` : "";
+  const warnHtml = warnParts.length
+    ? `<div class="hint" style="margin-top:8px;color:#fbbf24">${warnParts.join(" ")}</div>`
+    : "";
 
   box.innerHTML = `
     <div class="rec-box">
@@ -265,21 +286,26 @@ function currentContext(){
   const amount = Number(el("inpAmount").value || 0);
   const linepay = el("inpLinePay").checked;
 
-  // Region auto/override
-  let region = el("inpRegion").value;
-  if(region === "AUTO"){
+  // Region auto/override（更健壯：空值也視為 AUTO）
+  let regionRaw = el("inpRegion").value;
+  let region = regionRaw;
+  if(!region || region === "AUTO"){
     region = guessRegion(merchant);
   }
 
-  // Category auto/override
-  let category = el("inpCategory").value;
-  if(category === "AUTO"){
+  // Category auto/override（更健壯：空值也視為 AUTO）
+  let categoryRaw = el("inpCategory").value;
+  let category = categoryRaw;
+  let category_source = "MANUAL";
+  if(!category || category === "AUTO"){
     category = guessCategory(merchant);
+    category_source = "GUESSED";
   }
 
   return {
     date: norm(el("inpDate").value),
-    merchant, amount, region, category, linepay
+    merchant, amount, region, category, linepay,
+    category_source
   };
 }
 
